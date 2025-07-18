@@ -95,20 +95,6 @@ python -m streamlit run app.py
 - **Refresh Data**: Run job monitoring and reload data
 - **Export to CSV**: Download filtered results
 
-## Visual Design
-
-### Color Scheme
-- **New jobs**: Green (#28a745)
-- **Seen jobs**: Blue (#17a2b8)
-- **Modified jobs**: Yellow (#ffc107)
-- **Removed jobs**: Red (#dc3545)
-- **Company badges**: Gray (#e9ecef)
-
-### Responsive Layout
-- **Wide layout**: Optimized for desktop screens
-- **Mobile-friendly**: Responsive design for mobile devices
-- **Sidebar**: Collapsible filters panel
-
 ## Configuration
 
 ### Database Connection

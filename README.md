@@ -1,6 +1,6 @@
 # Job Search Assistant
 
-A comprehensive automation tool designed to streamline the job search process for data science, solutions architecture, and consulting roles. This personal project combines web scraping, intelligent filtering, and automated tracking to help identify and monitor relevant job opportunities.
+A comprehensive automation tool designed to streamline the job search process. This personal project combines web scraping, intelligent filtering, and automated tracking to help identify and monitor relevant job opportunities.
 
 ## Project Purpose
 
@@ -11,8 +11,6 @@ The Job Search Assistant addresses the challenges of modern job hunting by autom
 - **Progress Tracking**: Maintains a complete history of job postings, tracking status changes over time
 - **Trend Analysis**: Provides insights into hiring patterns and market trends
 - **Application Support**: Generates structured data to support personalised applications
-
-This tool was developed to support searches for internships and entry-level positions in data science, AI engineering, and hybrid consulting roles, though it can be adapted for other career paths.
 
 ## Core Features
 
@@ -97,7 +95,7 @@ job-search-assistant/
 
 1. **Clone or download the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/FelixBROCHIER/job-search-assistant.git
    cd job-search-assistant
    ```
 
@@ -127,8 +125,6 @@ job-search-assistant/
    Edit `data/companies_to_watch.csv` to include your target companies:
    ```csv
    company_name,career_page_url
-   Google,https://careers.google.com/jobs/results/
-   Microsoft,https://careers.microsoft.com/us/en/search-results
    ```
 
 5. **Customise search criteria**
@@ -247,11 +243,6 @@ After setup, your files will be organized as follows:
 - No personal information is transmitted to external services
 - API keys are stored locally in environment variables
 
-### Legal Compliance
-- Tool respects robots.txt and terms of service
-- Intended for personal use in job searching
-- Users should verify all job postings through official channels
-
 ### Limitations
 - Depends on OpenAI API availability and accuracy
 - Search results may vary based on API performance
@@ -264,13 +255,3 @@ After setup, your files will be organized as follows:
 - **Integration**: Connect with popular job boards and ATS systems
 - **Collaboration**: Multi-user support for team job searches
 - **Analytics**: Advanced market analysis and salary insights
-
-## Support
-
-This is a personal project developed for educational and job search purposes. While it's designed to be robust and useful, it may require customisation for different use cases or environments.
-
-For questions or suggestions, please refer to the code comments and documentation within each module.
-
----
-
-**Disclaimer**: This tool is for educational and personal use. Always verify job postings through official company websites before applying. Respect the terms of service of all websites and APIs used. 
