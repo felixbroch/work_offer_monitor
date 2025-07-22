@@ -6,6 +6,7 @@ This module handles all database operations for job tracking including:
 - Job storage and retrieval
 - Status tracking and history
 - Data analysis and reporting
+- Professional data management for web application deployment
 """
 
 import sqlite3
@@ -495,4 +496,27 @@ class JobDatabase:
                 
         except sqlite3.Error as e:
             self.logger.error(f"Error getting all jobs: {e}")
+            return []
+    
+    def get_all_companies(self) -> List[str]:
+        """
+        Get list of all unique companies in the database.
+        
+        Returns:
+            List[str]: List of unique company names
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT DISTINCT company_name 
+                    FROM jobs 
+                    ORDER BY company_name
+                """)
+                
+                companies = [row[0] for row in cursor.fetchall()]
+                return companies
+                
+        except sqlite3.Error as e:
+            self.logger.error(f"Error getting companies: {e}")
             return [] 

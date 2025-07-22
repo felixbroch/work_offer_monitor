@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/api/server.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/backend/(.*)",
+      "dest": "backend/api/server.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "OPENAI_API_KEY": "@openai_api_key",
+    "DATABASE_PATH": "/tmp/job_history.db"
+  },
+  "functions": {
+    "backend/api/server.py": {
+      "runtime": "python3.9"
+    }
+  }
+}

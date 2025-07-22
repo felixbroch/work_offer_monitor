@@ -5,6 +5,13 @@ Job Search Engine Module
 This module provides the core functionality for intelligent job discovery
 using OpenAI's web search API. It handles job searching, filtering, and
 data extraction across multiple company career pages.
+
+Features:
+- AI-powered job discovery using OpenAI API
+- Intelligent filtering based on configurable criteria
+- Multi-company batch processing
+- Structured data extraction and validation
+- Professional error handling and logging
 """
 
 import os
@@ -13,19 +20,34 @@ import time
 import re
 import logging
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, Tuple
 from pathlib import Path
 
 import openai
 
-import sys
-import os
+# Add project root to Python path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from config.config import FILTERING_CRITERIA, FILES, OPENAI_SETTINGS, OUTPUT_SETTINGS
 
 
 class JobSearchEngine:
+    """
+    AI-powered job search engine for discovering relevant opportunities.
+    
+    This class handles the complete job discovery workflow:
+    - Loading company information from CSV files
+    - Executing AI-powered searches using OpenAI API
+    - Filtering results based on configurable criteria
+    - Extracting structured job data from search results
+    - Generating comprehensive reports and exports
+    
+    Attributes:
+        api_key (str): OpenAI API key for authentication
+        client (openai.OpenAI): Configured OpenAI client instance
+        logger (logging.Logger): Logger for tracking operations
+        companies (List[Dict]): List of companies to monitor
+    """
     """
     Intelligent job search engine using OpenAI's web search API.
     
@@ -36,38 +58,54 @@ class JobSearchEngine:
     - Progress tracking and logging
     """
     
-    def __init__(self, companies_file: str = None, results_file: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize the job search engine.
+        Initialize the job search engine with proper configuration.
         
         Args:
-            companies_file: Path to CSV file containing companies to monitor
-            results_file: Path to output file for search results
+            api_key (Optional[str]): OpenAI API key. If not provided, 
+                                   will be loaded from configuration
+        
+        Raises:
+            ValueError: If OpenAI API key is not configured
+            ConnectionError: If unable to validate API connection
         """
-        # File paths
-        self.companies_file = companies_file or FILES.get("companies_file", "data/companies_to_watch.csv")
-        self.results_file = results_file or FILES.get("results_file", "logs/job_results.md")
+        # Configure OpenAI client
+        self.api_key = api_key or OPENAI_SETTINGS.get("api_key")
+        if not self.api_key or self.api_key == "your_openai_api_key_here":
+            raise ValueError(
+                "OpenAI API key not configured. Please set OPENAI_API_KEY "
+                "environment variable or provide api_key parameter."
+            )
         
-        # OpenAI client
-        api_key = OPENAI_SETTINGS.get("api_key")
-        if not api_key or api_key == "your_openai_api_key_here":
-            raise ValueError("OpenAI API key not configured")
+        self.client = openai.OpenAI(api_key=self.api_key)
         
-        self.client = openai.OpenAI(api_key=api_key)
+        # Configure search settings
+        self.model = OPENAI_SETTINGS.get("model", "gpt-4")
+        self.max_retries = OPENAI_SETTINGS.get("max_retries", 3)
         
-        # Search settings
-        self.search_settings = OPENAI_SETTINGS.get("search_settings", {})
-        self.max_retries = self.search_settings.get("max_retries", 3)
-        self.retry_delay = self.search_settings.get("retry_delay", 2)
-        
-        # Filtering criteria
+        # Load filtering criteria
         self.filtering_criteria = FILTERING_CRITERIA
         
-        # Setup logging
-        self.logger = logging.getLogger(__name__)
+        # Setup professional logging
+        self._setup_logging()
         
-        # Results storage
-        self.all_results = []
+        # Initialize results storage
+        self.search_results = []
+        
+        self.logger.info("Job Search Engine initialized successfully")
+
+    def _setup_logging(self) -> None:
+        """Configure professional logging for the search engine."""
+        self.logger = logging.getLogger(__name__)
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
         
     def load_companies(self) -> List[Dict[str, str]]:
         """
