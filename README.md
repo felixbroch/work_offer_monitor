@@ -67,13 +67,11 @@ job-search-assistant/
 │   └── api/
 │       └── server.py             # Flask API server
 ├── src/                          # Python core modules
-│   ├── core/
-│   │   ├── database.py           # Database management
-│   │   ├── history_tracker.py    # Job change tracking
-│   │   ├── job_search_engine.py  # AI-powered job discovery
-│   │   └── scheduler.py          # Automated monitoring
-│   └── dashboard/
-│       └── dashboard.py          # Streamlit dashboard (legacy)
+│   └── core/
+│       ├── database.py           # Database management
+│       ├── history_tracker.py    # Job change tracking
+│       ├── job_search_engine.py  # AI-powered job discovery
+│       └── scheduler.py          # Automated monitoring
 ├── config/
 │   ├── config.py                 # Application configuration
 │   └── companies_to_watch.csv    # Company monitoring list
@@ -354,9 +352,6 @@ job-search-assistant/
 │   │   ├── database.py             # Database operations
 │   │   ├── history_tracker.py      # Job history tracking
 │   │   └── scheduler.py            # Task scheduling
-│   └── dashboard/
-│       ├── __init__.py
-│       └── dashboard.py            # Streamlit dashboard
 ├── config/
 │   ├── __init__.py
 │   ├── config.py                   # Configuration settings
@@ -366,29 +361,27 @@ job-search-assistant/
 │   ├── companies_to_watch.csv      # Companies to monitor
 │   ├── job_results.db              # SQLite database
 │   └── notifications_log.csv       # Notification history
-├── logs/
-│   └── job_monitor.log             # Application logs
 ├── scripts/
 │   └── setup.py                    # Setup script
 ├── docs/
 │   ├── JOB_TRACKING_DOCUMENTATION.md
-│   └── DASHBOARD_README.md
+│   └── DEPLOYMENT.md
 ├── main.py                         # Main CLI interface
-├── run_dashboard.py                # Dashboard launcher
+├── start_dev.py                    # Development server launcher
 ├── requirements.txt                # Dependencies
 └── README.md                       # This file
 ```
 
 ## Technologies Used
 
-- **Python 3.10+**: Core development language
+- **Python 3.10+**: Core development language  
 - **OpenAI API**: Web search and content analysis
 - **SQLite**: Local database for job storage and history
-- **Streamlit**: Interactive web dashboard
-- **Plotly**: Data visualisation and charts
+- **Flask**: API backend for web interface
+- **Next.js**: Modern React framework for frontend
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first CSS framework
 - **APScheduler**: Task scheduling and automation
-- **Pandas**: Data manipulation and analysis
-- **BeautifulSoup**: Web scraping (where applicable)
 
 ## Setup Instructions
 
@@ -465,14 +458,15 @@ python main.py --run-once
 ### Dashboard
 Launch the interactive dashboard:
 ```bash
-# Using the launcher script
-python run_dashboard.py
+# Start development servers
+python start_dev.py
 
-# Or directly with Streamlit
-streamlit run src/dashboard/dashboard.py
+# Or start manually
+npm run dev  # Frontend
+python backend/api/server.py  # Backend
 ```
 
-The dashboard provides:
+The web interface provides:
 - Interactive job listings with filtering
 - Visual analytics and trend charts
 - Company performance metrics

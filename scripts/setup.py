@@ -226,7 +226,7 @@ def main():
     print("1. Review and customise companies_to_watch.csv")
     print("2. Adjust search criteria in config.py")
     print("3. Run: python main.py")
-    print("4. Or launch dashboard: python run_dashboard.py")
+    print("4. Or launch web app: python start_dev.py")
     print()
     print("For help, see README.md or run: python main.py")
 

@@ -100,14 +100,14 @@ def show_statistics():
 
 
 def launch_dashboard():
-    """Launch the dashboard."""
-    print("Launching dashboard...")
+    """Launch the web application."""
+    print("Launching web application...")
     
     try:
         import subprocess
-        subprocess.run([sys.executable, "run_dashboard.py"])
+        subprocess.run([sys.executable, "start_dev.py"])
     except Exception as e:
-        print(f"Error launching dashboard: {e}")
+        print(f"Error launching web application: {e}")
 
 
 def main():
