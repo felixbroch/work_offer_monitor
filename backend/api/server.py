@@ -394,3 +394,9 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"Failed to start API server: {e}")
         sys.exit(1)
+
+# Vercel handler
+def handler(request):
+    """Handler for Vercel serverless functions."""
+    initialize_database()
+    return app(request.environ, request.start_response)

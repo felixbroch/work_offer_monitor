@@ -2,8 +2,8 @@
   "version": 2,
   "routes": [
     {
-      "src": "/api/backend/(.*)",
-      "dest": "backend/api/server.py"
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
     },
     {
       "src": "/(.*)",
@@ -12,10 +12,5 @@
   ],
   "env": {
     "DATABASE_PATH": "/tmp/job_history.db"
-  },
-  "functions": {
-    "backend/api/server.py": {
-      "runtime": "@vercel/python"
-    }
   }
 }
