@@ -29,12 +29,12 @@ export default function JobList({ jobs, loading }: JobListProps) {
 
   // Get unique companies and statuses for filters
   const companies = useMemo(() => {
-    const uniqueCompanies = [...new Set(jobs.map(job => job.company_name))].sort()
+    const uniqueCompanies = Array.from(new Set(jobs.map(job => job.company_name))).sort()
     return uniqueCompanies
   }, [jobs])
 
   const statuses = useMemo(() => {
-    const uniqueStatuses = [...new Set(jobs.map(job => job.status))].sort()
+    const uniqueStatuses = Array.from(new Set(jobs.map(job => job.status))).sort()
     return uniqueStatuses
   }, [jobs])
 
