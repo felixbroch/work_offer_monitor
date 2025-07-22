@@ -71,6 +71,19 @@ def health_check():
     })
 
 
+# Add routes that match frontend expectations
+@app.route('/api/backend/health', methods=['GET'])
+def backend_health_check():
+    """Health check endpoint for /api/backend path."""
+    return health_check()
+
+
+@app.route('/api/backend/validate-api-key', methods=['POST'])
+def backend_validate_api_key():
+    """Validate API key endpoint for /api/backend path."""
+    return validate_api_key_endpoint()
+
+
 @app.route('/api/validate-api-key', methods=['POST'])
 def validate_api_key_endpoint():
     """Validate OpenAI API key."""
@@ -394,6 +407,39 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"Failed to start API server: {e}")
         sys.exit(1)
+# Backend route wrappers for frontend compatibility
+@app.route('/api/backend/jobs', methods=['GET'])
+def backend_get_jobs():
+    """Get jobs endpoint for /api/backend path."""
+    return get_jobs()
+
+
+@app.route('/api/backend/jobs/statistics', methods=['GET'])
+def backend_get_job_statistics():
+    """Get job statistics endpoint for /api/backend path."""
+    return get_job_statistics()
+
+
+@app.route('/api/backend/jobs/search', methods=['POST'])
+def backend_trigger_job_search():
+    """Trigger job search endpoint for /api/backend path."""
+    return search_jobs()
+
+
+@app.route('/api/backend/jobs/export', methods=['GET'])
+def backend_export_jobs():
+    """Export jobs endpoint for /api/backend path."""
+    return export_jobs()
+
+
+@app.route('/api/backend/companies', methods=['GET', 'POST'])
+def backend_companies():
+    """Companies endpoint for /api/backend path."""
+    if request.method == 'GET':
+        return get_companies()
+    else:
+        return add_company()
+
 
 # Vercel handler
 def handler(request):
