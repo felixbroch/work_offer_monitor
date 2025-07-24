@@ -148,6 +148,21 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
         apiKeyPresent: !!apiKey
       })
 
+      // DEBUGGING: Log request details before sending
+      const requestPayload = {
+        api_key: apiKey ? `${apiKey.substring(0, 10)}...` : 'MISSING',
+        criteria: searchCriteria,
+        companies: companies
+      }
+      
+      console.log('📤 SENDING REQUEST TO API:', {
+        endpoint: '/api/backend/jobs/search-with-criteria',
+        payload: requestPayload,
+        companiesCount: companies.length,
+        criteriaValid: !!searchCriteria,
+        apiKeyPresent: !!apiKey
+      })
+
       // Call the API endpoint
       const response = await fetch('/api/backend/jobs/search-with-criteria', {
         method: 'POST',
@@ -175,7 +190,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
 
       const data = await response.json()
       
-      // Store debug information for production debugging
+      // COMPREHENSIVE DEBUG: Store debug information for production debugging
       const debugData = {
         timestamp: new Date().toISOString(),
         searchCriteria,
@@ -186,17 +201,33 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
           successValue: data.success,
           jobsLength: data.jobs?.length || 0,
           jobsType: typeof data.jobs,
-          keys: Object.keys(data)
+          keys: Object.keys(data),
+          companiesSearched: data.companies_searched || 0,
+          companiesWithResults: data.companies_with_results || 0
+        },
+        criticalChecks: {
+          apiKeyValid: !!apiKey && apiKey.length > 20,
+          companiesListValid: Array.isArray(companies) && companies.length > 0,
+          responseIsObject: typeof data === 'object',
+          hasJobsArray: Array.isArray(data.jobs),
+          jobsArrayLength: data.jobs?.length || 0
         }
       }
       setDebugInfo(debugData)
       
-      console.log('📊 API response received:', {
+      console.log('� DETAILED API RESPONSE ANALYSIS:', {
+        responseKeys: Object.keys(data),
         success: data.success,
         jobsCount: data.jobs?.length || 0,
+        jobsType: typeof data.jobs,
+        jobsIsArray: Array.isArray(data.jobs),
         searchType: data.search_type,
+        companiesSearched: data.companies_searched,
         companiesWithResults: data.companies_with_results,
         searchStats: data.search_stats,
+        errors: data.errors,
+        suggestions: data.suggestions,
+        firstJobSample: data.jobs?.[0] || 'NO_JOBS',
         fullResponse: data // Log full response for debugging
       })
 
@@ -204,24 +235,50 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
       const jobs = data.jobs || []
       const isSuccess = data.success !== false // Default to true if not explicitly false
       
+      console.log('🎯 JOB PROCESSING ANALYSIS:', {
+        rawJobsData: data.jobs,
+        jobsExtracted: jobs,
+        jobsLength: jobs.length,
+        isSuccessFlag: isSuccess,
+        dataSuccess: data.success,
+        companiesSearched: data.companies_searched,
+        companiesWithResults: data.companies_with_results,
+        processingStep: 'STARTING_JOB_PROCESSING'
+      })
+      
       if (jobs.length > 0) {
+        console.log('✅ JOBS FOUND - Processing for display...')
+        
         // Clear any previous errors when jobs are found
         setError(null)
         
-        const foundJobs = jobs.map((job: any) => ({
-          ...job,
-          job_id: job.job_id || `${job.company_name || 'unknown'}-${Date.now()}-${Math.random()}`,
-          posting_date: job.posting_date || job.found_date || new Date().toISOString().split('T')[0],
-          title: job.title || 'Software Engineer', // Fallback title
-          company_name: job.company_name || 'Unknown Company', // Fallback company
-          location: job.location || 'Unknown Location', // Fallback location
-          url: job.url || '#' // Fallback URL
-        }))
+        const foundJobs = jobs.map((job: any, index: number) => {
+          const processedJob = {
+            ...job,
+            job_id: job.job_id || `${job.company_name || 'unknown'}-${Date.now()}-${Math.random()}`,
+            posting_date: job.posting_date || job.found_date || new Date().toISOString().split('T')[0],
+            title: job.title || 'Software Engineer', // Fallback title
+            company_name: job.company_name || 'Unknown Company', // Fallback company
+            location: job.location || 'Unknown Location', // Fallback location
+            url: job.url || '#' // Fallback URL
+          }
+          
+          console.log(`📝 Processing job ${index + 1}:`, {
+            originalJob: job,
+            processedJob: processedJob,
+            hasTitle: !!job.title,
+            hasCompany: !!job.company_name,
+            hasLocation: !!job.location
+          })
+          
+          return processedJob
+        })
 
-        console.log('✅ Processing jobs for display:', {
+        console.log('🎉 JOBS SUCCESSFULLY PROCESSED:', {
           jobCount: foundJobs.length,
           firstJob: foundJobs[0],
-          allJobTitles: foundJobs.map((j: any) => j.title)
+          allJobTitles: foundJobs.map((j: any) => j.title),
+          processingComplete: true
         })
 
         setJobs(foundJobs)
@@ -464,12 +521,124 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
           <p className="text-yellow-700 mb-4">
             No jobs found matching your current filters. Try adjusting your search criteria:
           </p>
-          <ul className="text-sm text-yellow-700 text-left max-w-md mx-auto space-y-1">
+          <ul className="text-sm text-yellow-700 text-left max-w-md mx-auto space-y-1 mb-4">
             <li>• Try broader keywords or remove specific terms</li>
             <li>• Expand location to "All Locations"</li>
             <li>• Include more experience levels</li>
             <li>• Check your spelling</li>
           </ul>
+          <button
+            onClick={() => setShowDebug(true)}
+            className="text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded border"
+          >
+            🔧 Show Debug Information
+          </button>
+        </div>
+      )}
+
+      {/* COMPREHENSIVE PRODUCTION DEBUG PANEL */}
+      {(showDebug || (hasSearched && jobs.length === 0 && !loading)) && (
+        <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-red-800">🔧 Production Debug Analysis</h3>
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-sm text-red-600 hover:text-red-800 underline"
+            >
+              {showDebug ? 'Hide' : 'Show'} Debug
+            </button>
+          </div>
+          
+          <div className="space-y-4 text-sm">
+            <div className="bg-white p-4 rounded border">
+              <h4 className="font-semibold text-gray-800 mb-2">🎯 CURRENT DISPLAY STATE:</h4>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <strong>Jobs Array Length:</strong> {jobs.length}
+                  <br />
+                  <strong>Loading State:</strong> {loading ? 'True' : 'False'}
+                  <br />
+                  <strong>Error State:</strong> {error || 'None'}
+                  <br />
+                  <strong>Has Searched:</strong> {hasSearched ? 'True' : 'False'}
+                </div>
+                <div>
+                  <strong>Debug Info Available:</strong> {debugInfo ? 'Yes' : 'No'}
+                  <br />
+                  <strong>Filters Applied:</strong> {Object.values(filters).some(f => f !== '') ? 'Yes' : 'No'}
+                  <br />
+                  <strong>Show Debug Panel:</strong> {showDebug ? 'True' : 'False'}
+                  <br />
+                  <strong>Environment:</strong> {typeof window !== 'undefined' ? 'Client' : 'Server'}
+                </div>
+              </div>
+            </div>
+
+            {debugInfo && (
+              <div className="bg-white p-4 rounded border">
+                <h4 className="font-semibold text-gray-800 mb-2">📡 API RESPONSE ANALYSIS:</h4>
+                <div className="space-y-2">
+                  <div className="p-2 bg-gray-50 rounded">
+                    <strong>Response Structure:</strong>
+                    <pre className="text-xs mt-1 overflow-auto">
+{JSON.stringify(debugInfo.responseStructure, null, 2)}
+                    </pre>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <strong>Search Criteria Used:</strong>
+                    <pre className="text-xs mt-1 overflow-auto">
+{JSON.stringify(debugInfo.searchCriteria, null, 2)}
+                    </pre>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <strong>Full API Response:</strong>
+                    <pre className="text-xs mt-1 overflow-auto max-h-40">
+{JSON.stringify(debugInfo.apiResponse, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white p-4 rounded border">
+              <h4 className="font-semibold text-gray-800 mb-2">✅ TROUBLESHOOTING CHECKLIST:</h4>
+              <div className="space-y-2">
+                <div className={`p-2 rounded text-sm ${jobs.length > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  Jobs Available for Display: {jobs.length > 0 ? `✅ ${jobs.length} jobs found` : '❌ No jobs in state'}
+                </div>
+                <div className={`p-2 rounded text-sm ${!loading ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                  Loading State: {!loading ? '✅ Not loading (ready to display)' : '⏳ Currently loading'}
+                </div>
+                <div className={`p-2 rounded text-sm ${!error ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  Error State: {!error ? '✅ No errors detected' : `❌ Error: ${error}`}
+                </div>
+                <div className={`p-2 rounded text-sm ${debugInfo?.apiResponse ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  API Response: {debugInfo?.apiResponse ? '✅ API responded' : '❌ No API response received'}
+                </div>
+                <div className={`p-2 rounded text-sm ${hasSearched ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                  Search Performed: {hasSearched ? '✅ Search was executed' : '⏳ No search performed yet'}
+                </div>
+              </div>
+            </div>
+
+            {jobs.length > 0 && (
+              <div className="bg-white p-4 rounded border">
+                <h4 className="font-semibold text-gray-800 mb-2">🎯 JOBS READY FOR DISPLAY:</h4>
+                <div className="space-y-1 text-xs">
+                  {jobs.slice(0, 3).map((job: any, index: number) => (
+                    <div key={index} className="p-2 bg-gray-50 rounded">
+                      <strong>Job {index + 1}:</strong> {job.title} at {job.company_name} ({job.location})
+                    </div>
+                  ))}
+                  {jobs.length > 3 && (
+                    <div className="p-2 bg-gray-100 rounded text-center">
+                      ... and {jobs.length - 3} more jobs
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
