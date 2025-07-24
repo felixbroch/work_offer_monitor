@@ -45,6 +45,10 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  
+  // Debug state for production debugging
+  const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [showDebug, setShowDebug] = useState(false)
 
   // State for companies to search
   const [companies, setCompanies] = useState<string[]>([
@@ -110,6 +114,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
       return
     }
 
+    console.log('🚀 Starting search with filters:', filters)
     setLoading(true)
     setError(null)
     setHasSearched(true)
@@ -125,7 +130,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
           ['Remote', 'Paris', 'Lyon', 'New York', 'San Francisco', 'London', 'Berlin'] : 
           [filters.location],
         title_keywords: filters.keywords.trim() ? 
-          filters.keywords.split(',').map(k => k.trim()).filter(k => k.length > 0) : 
+          filters.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0) : 
           ['Software Engineer', 'Developer', 'Data Scientist', 'Product Manager', 'Designer'],
         experience_levels: filters.experience_level === 'All' ? 
           ['junior', 'mid-level', 'senior'] : 
@@ -139,7 +144,8 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
         isBroadSearch,
         filters,
         searchCriteria,
-        companies: companies.length
+        companies: companies.length,
+        apiKeyPresent: !!apiKey
       })
 
       // Call the API endpoint
@@ -155,46 +161,89 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
         })
       })
 
+      console.log('📡 API response status:', response.status, response.statusText)
+
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ API request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText.substring(0, 500)
+        })
         throw new Error(`API request failed: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
+      
+      // Store debug information for production debugging
+      const debugData = {
+        timestamp: new Date().toISOString(),
+        searchCriteria,
+        apiResponse: data,
+        responseStructure: {
+          hasSuccess: 'success' in data,
+          hasJobs: 'jobs' in data,
+          successValue: data.success,
+          jobsLength: data.jobs?.length || 0,
+          jobsType: typeof data.jobs,
+          keys: Object.keys(data)
+        }
+      }
+      setDebugInfo(debugData)
+      
       console.log('📊 API response received:', {
         success: data.success,
         jobsCount: data.jobs?.length || 0,
         searchType: data.search_type,
         companiesWithResults: data.companies_with_results,
-        searchStats: data.search_stats
+        searchStats: data.search_stats,
+        fullResponse: data // Log full response for debugging
       })
 
-      if (data.success && data.jobs) {
-        const foundJobs = data.jobs.map((job: any) => ({
+      // IMPROVED: Handle different response formats and ensure jobs are displayed
+      const jobs = data.jobs || []
+      const isSuccess = data.success !== false // Default to true if not explicitly false
+      
+      if (jobs.length > 0) {
+        // Clear any previous errors when jobs are found
+        setError(null)
+        
+        const foundJobs = jobs.map((job: any) => ({
           ...job,
-          job_id: job.job_id || `${job.company_name}-${Date.now()}-${Math.random()}`,
-          posting_date: job.posting_date || job.found_date || new Date().toISOString().split('T')[0]
+          job_id: job.job_id || `${job.company_name || 'unknown'}-${Date.now()}-${Math.random()}`,
+          posting_date: job.posting_date || job.found_date || new Date().toISOString().split('T')[0],
+          title: job.title || 'Software Engineer', // Fallback title
+          company_name: job.company_name || 'Unknown Company', // Fallback company
+          location: job.location || 'Unknown Location', // Fallback location
+          url: job.url || '#' // Fallback URL
         }))
+
+        console.log('✅ Processing jobs for display:', {
+          jobCount: foundJobs.length,
+          firstJob: foundJobs[0],
+          allJobTitles: foundJobs.map((j: any) => j.title)
+        })
 
         setJobs(foundJobs)
         onJobsFound?.(foundJobs)
-
-        if (foundJobs.length === 0) {
-          // Enhanced error message with suggestions from API
-          const suggestions = data.suggestions || [
-            'Try broader keywords like "Engineer" or "Developer"',
-            'Expand location to "All Locations"',
-            'Include more experience levels',
-            'Consider related job titles'
-          ]
-          
-          setError(`No jobs found matching your criteria. Try adjusting your filters:\n• ${suggestions.join('\n• ')}`)
-        } else {
-          // Log success metrics
-          console.log(`✅ Search successful: ${foundJobs.length} jobs from ${data.companies_with_results || 'unknown'} companies`)
-        }
+        
+        console.log(`✅ Search successful: ${foundJobs.length} jobs from ${data.companies_with_results || 'unknown'} companies`)
+      } else if (isSuccess) {
+        // API succeeded but returned no jobs
+        const suggestions = data.suggestions || [
+          'Try broader keywords like "Engineer" or "Developer"',
+          'Expand location to "All Locations"',
+          'Include more experience levels',
+          'Consider related job titles'
+        ]
+        
+        setJobs([]) // Clear previous jobs
+        setError(`No jobs found matching your criteria. Try adjusting your filters:\n• ${suggestions.join('\n• ')}`)
+        console.warn('⚠️ API succeeded but returned no jobs')
       } else {
+        // API failed
         const errorMsg = data.error || 'No jobs found matching your criteria.'
-        console.warn('⚠️ Search returned no results:', errorMsg)
+        console.warn('⚠️ API returned error:', errorMsg)
         setError(errorMsg)
         setJobs([])
       }
@@ -354,6 +403,47 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
           </div>
         )}
       </div>
+
+      {/* Debug Panel for Production Debugging */}
+      {debugInfo && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium text-gray-700">Debug Information</h4>
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              {showDebug ? 'Hide' : 'Show'} Debug
+            </button>
+          </div>
+          
+          {showDebug && (
+            <div className="space-y-2 text-xs">
+              <div>
+                <strong>Search Time:</strong> {debugInfo.timestamp}
+              </div>
+              <div>
+                <strong>API Response Structure:</strong>
+                <pre className="bg-white p-2 rounded mt-1 text-xs overflow-auto">
+{JSON.stringify(debugInfo.responseStructure, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <strong>Search Criteria:</strong>
+                <pre className="bg-white p-2 rounded mt-1 text-xs overflow-auto">
+{JSON.stringify(debugInfo.searchCriteria, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <strong>Full API Response:</strong>
+                <pre className="bg-white p-2 rounded mt-1 text-xs overflow-auto max-h-40">
+{JSON.stringify(debugInfo.apiResponse, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
