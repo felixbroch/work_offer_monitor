@@ -115,17 +115,32 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
     setHasSearched(true)
 
     try {
-      // Build search criteria from filters
+      // Build search criteria from filters - IMPROVED FOR BROAD SEARCHES
+      const isBroadSearch = filters.location === 'All' && 
+                          filters.experience_level === 'All' && 
+                          (!filters.keywords.trim() || filters.keywords.trim().length < 3)
+
       const searchCriteria = {
-        locations: filters.location === 'All' ? ['Remote', 'Paris', 'Lyon', 'New York', 'San Francisco'] : [filters.location],
-        title_keywords: filters.keywords.trim() ? filters.keywords.split(',').map(k => k.trim()) : ['Software Engineer', 'Developer', 'Data Scientist'],
-        experience_levels: filters.experience_level === 'All' ? ['junior', 'mid-level', 'senior'] : [filters.experience_level.toLowerCase()],
+        locations: filters.location === 'All' ? 
+          ['Remote', 'Paris', 'Lyon', 'New York', 'San Francisco', 'London', 'Berlin'] : 
+          [filters.location],
+        title_keywords: filters.keywords.trim() ? 
+          filters.keywords.split(',').map(k => k.trim()).filter(k => k.length > 0) : 
+          ['Software Engineer', 'Developer', 'Data Scientist', 'Product Manager', 'Designer'],
+        experience_levels: filters.experience_level === 'All' ? 
+          ['junior', 'mid-level', 'senior'] : 
+          [filters.experience_level.toLowerCase()],
         remote_allowed: true,
         company_types: ['Technology', 'Startup', 'Enterprise'],
-        salary_min: '80000'
+        salary_min: '70000' // Lowered for broader results
       }
 
-      console.log('Searching with criteria:', searchCriteria)
+      console.log('🔍 Search initiated:', {
+        isBroadSearch,
+        filters,
+        searchCriteria,
+        companies: companies.length
+      })
 
       // Call the API endpoint
       const response = await fetch('/api/backend/jobs/search-with-criteria', {
@@ -145,7 +160,13 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
       }
 
       const data = await response.json()
-      console.log('API response:', data)
+      console.log('📊 API response received:', {
+        success: data.success,
+        jobsCount: data.jobs?.length || 0,
+        searchType: data.search_type,
+        companiesWithResults: data.companies_with_results,
+        searchStats: data.search_stats
+      })
 
       if (data.success && data.jobs) {
         const foundJobs = data.jobs.map((job: any) => ({
@@ -158,16 +179,30 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
         onJobsFound?.(foundJobs)
 
         if (foundJobs.length === 0) {
-          setError('No jobs found matching your criteria. Try adjusting your filters.')
+          // Enhanced error message with suggestions from API
+          const suggestions = data.suggestions || [
+            'Try broader keywords like "Engineer" or "Developer"',
+            'Expand location to "All Locations"',
+            'Include more experience levels',
+            'Consider related job titles'
+          ]
+          
+          setError(`No jobs found matching your criteria. Try adjusting your filters:\n• ${suggestions.join('\n• ')}`)
+        } else {
+          // Log success metrics
+          console.log(`✅ Search successful: ${foundJobs.length} jobs from ${data.companies_with_results || 'unknown'} companies`)
         }
       } else {
-        setError(data.error || 'No jobs found matching your criteria.')
+        const errorMsg = data.error || 'No jobs found matching your criteria.'
+        console.warn('⚠️ Search returned no results:', errorMsg)
+        setError(errorMsg)
         setJobs([])
       }
 
     } catch (err) {
-      console.error('Search error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to search for jobs. Please try again.')
+      console.error('❌ Search error:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search for jobs. Please try again.'
+      setError(`Search failed: ${errorMessage}`)
       setJobs([])
     } finally {
       setLoading(false)
