@@ -701,10 +701,10 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
                         {job.experience_level}
                       </div>
                     )}
-                    {job.posting_date && (
+                    {job.date_first_seen && (
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {formatDate(job.posting_date)}
+                        {formatDate(job.date_first_seen)}
                       </div>
                     )}
                     {job.remote_friendly && (
@@ -755,7 +755,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-gray-500">
                       {job.department && `${job.department} • `}
-                      Posted {formatDate(job.posting_date || job.found_date || new Date().toISOString())}
+                      Posted {formatDate(job.date_first_seen || new Date().toISOString())}
                     </div>
                     <a
                       href={job.url}
