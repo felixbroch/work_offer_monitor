@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CheckCircle, AlertCircle, XCircle, Settings, Plus, Search, Download, RefreshCw } from 'lucide-react'
+import { CheckCircle, AlertCircle, XCircle, Settings, Plus, Search, Download, RefreshCw, Target } from 'lucide-react'
 import ApiKeyModal from '../components/ApiKeyModal'
+import JobCriteriaModal from '../components/JobCriteriaModal'
 import JobSearch from '../components/JobSearch'
 import JobList from '../components/JobList'
 import Dashboard from '../components/Dashboard'
@@ -31,6 +32,14 @@ interface Job {
 export default function Home() {
   const [apiKey, setApiKey] = useState<string>('')
   const [showApiKeyModal, setShowApiKeyModal] = useState(false)
+  const [showCriteriaModal, setShowCriteriaModal] = useState(false)
+  const [jobCriteria, setJobCriteria] = useState({
+    locations: ['Remote', 'New York', 'San Francisco'],
+    title_keywords: ['Software Engineer', 'Developer', 'Data Scientist'],
+    experience_levels: ['junior', 'mid-level', 'senior'],
+    remote_allowed: true,
+    company_types: ['Startup', 'Enterprise', 'Tech Company']
+  })
   const [currentView, setCurrentView] = useState<'dashboard' | 'jobs' | 'search' | 'companies'>('dashboard')
   const [jobs, setJobs] = useState<Job[]>([])
   const [statistics, setStatistics] = useState<JobStatistics | null>(null)
@@ -62,6 +71,24 @@ export default function Home() {
     loadJobs()
     loadStatistics()
   }
+
+  const handleCriteriaSubmit = (criteria: any) => {
+    setJobCriteria(criteria)
+    localStorage.setItem('job_criteria', JSON.stringify(criteria))
+    setShowCriteriaModal(false)
+  }
+
+  // Load saved criteria on mount
+  useEffect(() => {
+    const savedCriteria = localStorage.getItem('job_criteria')
+    if (savedCriteria) {
+      try {
+        setJobCriteria(JSON.parse(savedCriteria))
+      } catch (e) {
+        console.error('Error loading saved criteria:', e)
+      }
+    }
+  }, [])
 
   const loadJobs = async () => {
     try {
@@ -218,6 +245,13 @@ export default function Home() {
                 Export
               </button>
               <button
+                onClick={() => setShowCriteriaModal(true)}
+                className="btn-primary flex items-center"
+              >
+                <Target className="h-4 w-4 mr-2" />
+                Job Criteria
+              </button>
+              <button
                 onClick={() => setShowApiKeyModal(true)}
                 className="btn-secondary flex items-center"
               >
@@ -286,7 +320,12 @@ export default function Home() {
           <JobList jobs={jobs} loading={loading} />
         )}
         {currentView === 'search' && (
-          <JobSearch onSearch={handleJobSearch} loading={loading} />
+          <JobSearch 
+            onSearch={handleJobSearch} 
+            loading={loading} 
+            apiKey={apiKey}
+            jobCriteria={jobCriteria}
+          />
         )}
         {currentView === 'companies' && (
           <CompanyManager />
@@ -299,6 +338,15 @@ export default function Home() {
           onSubmit={handleApiKeySubmit}
           onClose={() => setShowApiKeyModal(false)}
           initialKey={apiKey}
+        />
+      )}
+
+      {/* Job Criteria Modal */}
+      {showCriteriaModal && (
+        <JobCriteriaModal
+          onSubmit={handleCriteriaSubmit}
+          onClose={() => setShowCriteriaModal(false)}
+          initialCriteria={jobCriteria}
         />
       )}
     </div>

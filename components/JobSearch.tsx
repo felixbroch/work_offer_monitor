@@ -11,9 +11,11 @@ interface Company {
 interface JobSearchProps {
   onSearch: (companies: Company[]) => Promise<any>
   loading: boolean
+  apiKey: string
+  jobCriteria: any
 }
 
-export default function JobSearch({ onSearch, loading }: JobSearchProps) {
+export default function JobSearch({ onSearch, loading, apiKey, jobCriteria }: JobSearchProps) {
   const [companies, setCompanies] = useState<Company[]>([
     { company_name: '', career_page_url: '' }
   ])
@@ -49,8 +51,30 @@ export default function JobSearch({ onSearch, loading }: JobSearchProps) {
     }
 
     try {
-      const results = await onSearch(validCompanies)
+      // Use the new API endpoint with criteria
+      const response = await fetch('/api/backend/jobs/search-with-criteria', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          api_key: apiKey,
+          criteria: jobCriteria,
+          companies: validCompanies
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Search failed')
+      }
+
+      const results = await response.json()
       setSearchResults(results)
+      
+      // Also call the parent onSearch callback for backward compatibility
+      await onSearch(validCompanies)
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed')
     }
