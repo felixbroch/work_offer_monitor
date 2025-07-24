@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Endpoint Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testEndpoints() {
+            const results = document.getElementById('results');
+            const endpoints = [
+                { url: '/api/backend/jobs', method: 'GET' },
+                { url: '/api/backend/jobs/statistics', method: 'GET' },
+                { url: '/api/backend/companies', method: 'GET' },
+                { url: '/api/backend/validate-api-key', method: 'POST', body: { api_key: 'sk-test12345678901234567890' } },
+                { url: '/api/backend/jobs/search', method: 'POST', body: { query: 'software engineer' } }
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url, {
+                        method: endpoint.method,
+                        headers: endpoint.body ? { 'Content-Type': 'application/json' } : {},
+                        body: endpoint.body ? JSON.stringify(endpoint.body) : undefined
+                    });
+                    
+                    const data = await response.json();
+                    results.innerHTML += `<h3>${endpoint.method} ${endpoint.url}</h3>`;
+                    results.innerHTML += `<p>Status: ${response.status}</p>`;
+                    results.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre><hr>`;
+                } catch (error) {
+                    results.innerHTML += `<h3>${endpoint.method} ${endpoint.url}</h3>`;
+                    results.innerHTML += `<p>Error: ${error.message}</p><hr>`;
+                }
+            }
+        }
+        
+        // Run tests when page loads
+        testEndpoints();
+    </script>
+</body>
+</html>
