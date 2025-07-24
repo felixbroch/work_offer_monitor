@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .result { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API Debug Test</h1>
+        <p>This page tests the job search API endpoint directly.</p>
+        
+        <button onclick="testAPI()">Test Search API</button>
+        <button onclick="testBasicAPI()">Test Basic Jobs API</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const results = document.getElementById('results');
+            addResult('Testing /api/backend/jobs/search-with-criteria...', 'info');
+            
+            try {
+                const response = await fetch('/api/backend/jobs/search-with-criteria', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        api_key: 'sk-test12345678901234567890',
+                        criteria: {
+                            locations: ['San Francisco', 'Remote'],
+                            title_keywords: ['Software Engineer', 'Developer'],
+                            experience_levels: ['senior', 'mid-level'],
+                            remote_allowed: true,
+                            company_types: ['Technology'],
+                            salary_min: '100000'
+                        },
+                        companies: ['Google', 'Microsoft']
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ SUCCESS (${response.status}): ${data.jobs?.length || 0} jobs found`, 'success');
+                    addResult(JSON.stringify(data, null, 2), 'success', true);
+                } else {
+                    addResult(`❌ ERROR (${response.status}): ${data.error || 'Unknown error'}`, 'error');
+                    addResult(JSON.stringify(data, null, 2), 'error', true);
+                }
+            } catch (error) {
+                addResult(`❌ NETWORK ERROR: ${error.message}`, 'error');
+                console.error('Test API error:', error);
+            }
+        }
+        
+        async function testBasicAPI() {
+            const results = document.getElementById('results');
+            addResult('Testing /api/backend/jobs...', 'info');
+            
+            try {
+                const response = await fetch('/api/backend/jobs');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Basic API SUCCESS (${response.status}): ${data.jobs?.length || 0} jobs found`, 'success');
+                    addResult(JSON.stringify(data, null, 2), 'success', true);
+                } else {
+                    addResult(`❌ Basic API ERROR (${response.status})`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Basic API NETWORK ERROR: ${error.message}`, 'error');
+            }
+        }
+        
+        function addResult(message, type, isCode = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            
+            if (isCode) {
+                div.innerHTML = `<pre>${message}</pre>`;
+            } else {
+                div.textContent = message;
+            }
+            
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testAPI, 1000);
+        });
+    </script>
+</body>
+</html>
