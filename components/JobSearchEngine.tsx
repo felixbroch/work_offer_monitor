@@ -4,12 +4,15 @@ import { useState, useEffect, useCallback } from 'react'
 import { Search, Filter, X, MapPin, Briefcase, Type, AlertCircle, Loader2, Calendar, ExternalLink } from 'lucide-react'
 
 interface Job {
-  job_id?: string
-  title: string
+  job_id: string
   company_name: string
+  job_title: string
   location: string
   url: string
   description?: string
+  date_first_seen: string
+  date_last_seen: string
+  status: string
   experience_level?: string
   department?: string
   relevance_score?: number
@@ -17,8 +20,6 @@ interface Job {
   salary_range?: string
   key_skills?: string[]
   remote_friendly?: boolean
-  found_date?: string
-  posting_date?: string
 }
 
 interface SearchFilters {
@@ -256,11 +257,14 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
           const processedJob = {
             ...job,
             job_id: job.job_id || `${job.company_name || 'unknown'}-${Date.now()}-${Math.random()}`,
-            posting_date: job.posting_date || job.found_date || new Date().toISOString().split('T')[0],
-            title: job.title || 'Software Engineer', // Fallback title
-            company_name: job.company_name || 'Unknown Company', // Fallback company
-            location: job.location || 'Unknown Location', // Fallback location
-            url: job.url || '#' // Fallback URL
+            job_title: job.title || job.job_title || 'Software Engineer', // Map title to job_title
+            company_name: job.company_name || 'Unknown Company',
+            location: job.location || 'Unknown Location',
+            url: job.url || '#',
+            description: job.description || 'See job posting for details',
+            date_first_seen: job.posting_date || job.found_date || new Date().toISOString().split('T')[0],
+            date_last_seen: job.posting_date || job.found_date || new Date().toISOString().split('T')[0],
+            status: 'new' // Default status for all new jobs
           }
           
           console.log(`📝 Processing job ${index + 1}:`, {
