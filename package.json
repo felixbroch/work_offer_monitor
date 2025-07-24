@@ -28,7 +28,8 @@
     "recharts": "^2.10.4",
     "date-fns": "^3.3.1",
     "@headlessui/react": "^1.7.18",
-    "axios": "^1.6.7"
+    "axios": "^1.6.7",
+    "openai": "^4.20.1"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
