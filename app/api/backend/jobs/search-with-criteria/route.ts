@@ -43,8 +43,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
-        timeout: 30000 // 30 second timeout
+        body: JSON.stringify(body)
       })
 
       if (backendResponse.ok) {
@@ -86,10 +85,21 @@ export async function POST(request: NextRequest) {
       experience: body.criteria.experience_levels
     })
     
-    const { OpenAI } = await import('openai')
-    const openai = new OpenAI({
-      apiKey: body.api_key
-    })
+    // Import OpenAI with type assertion to bypass build issues
+    let openai: any
+    try {
+      const OpenAIModule = await import('openai' as any)
+      const OpenAI = OpenAIModule.default || OpenAIModule.OpenAI
+      openai = new OpenAI({
+        apiKey: body.api_key
+      })
+    } catch (openaiError) {
+      console.error('❌ Failed to import or initialize OpenAI:', openaiError)
+      return NextResponse.json(
+        { success: false, error: 'OpenAI not available', details: 'OpenAI module could not be loaded' },
+        { status: 500 }
+      )
+    }
 
     const allJobs = []
     const searchErrors = []
@@ -121,7 +131,7 @@ export async function POST(request: NextRequest) {
         searchStats.totalJobsFound += jobs.length
         
         // Check if fallback was used
-        if (jobs.some(job => job.search_method?.includes('fallback'))) {
+        if (jobs.some((job: any) => job.search_method?.includes('fallback'))) {
           searchStats.fallbacksUsed++
         }
         
