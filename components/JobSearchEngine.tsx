@@ -270,7 +270,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
           console.log(`📝 Processing job ${index + 1}:`, {
             originalJob: job,
             processedJob: processedJob,
-            hasTitle: !!job.title,
+            hasTitle: !!(job.title || job.job_title),
             hasCompany: !!job.company_name,
             hasLocation: !!job.location
           })
@@ -281,7 +281,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
         console.log('🎉 JOBS SUCCESSFULLY PROCESSED:', {
           jobCount: foundJobs.length,
           firstJob: foundJobs[0],
-          allJobTitles: foundJobs.map((j: any) => j.title),
+          allJobTitles: foundJobs.map((j: any) => j.job_title),
           processingComplete: true
         })
 
@@ -631,7 +631,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
                 <div className="space-y-1 text-xs">
                   {jobs.slice(0, 3).map((job: any, index: number) => (
                     <div key={index} className="p-2 bg-gray-50 rounded">
-                      <strong>Job {index + 1}:</strong> {job.title} at {job.company_name} ({job.location})
+                      <strong>Job {index + 1}:</strong> {job.job_title || job.title} at {job.company_name} ({job.location})
                     </div>
                   ))}
                   {jobs.length > 3 && (
@@ -677,7 +677,7 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                        {job.title}
+                        {job.job_title}
                       </h4>
                       <p className="text-blue-600 font-medium mb-2">
                         {job.company_name}
