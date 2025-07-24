@@ -5,6 +5,7 @@ import { CheckCircle, AlertCircle, XCircle, Settings, Plus, Search, Download, Re
 import ApiKeyModal from '../components/ApiKeyModal'
 import JobCriteriaModal from '../components/JobCriteriaModal'
 import JobSearch from '../components/JobSearch'
+import JobSearchEngine from '../components/JobSearchEngine'
 import JobList from '../components/JobList'
 import Dashboard from '../components/Dashboard'
 import CompanyManager from '../components/CompanyManager'
@@ -40,7 +41,7 @@ export default function Home() {
     remote_allowed: true,
     company_types: ['Startup', 'Enterprise', 'Tech Company']
   })
-  const [currentView, setCurrentView] = useState<'dashboard' | 'jobs' | 'search' | 'companies'>('dashboard')
+  const [currentView, setCurrentView] = useState<'dashboard' | 'jobs' | 'search' | 'advanced-search' | 'companies'>('dashboard')
   const [jobs, setJobs] = useState<Job[]>([])
   const [statistics, setStatistics] = useState<JobStatistics | null>(null)
   const [loading, setLoading] = useState(false)
@@ -270,7 +271,8 @@ export default function Home() {
             {[
               { key: 'dashboard', label: 'Dashboard', icon: CheckCircle },
               { key: 'jobs', label: 'Jobs', icon: Search },
-              { key: 'search', label: 'Search', icon: Plus },
+              { key: 'search', label: 'Basic Search', icon: Plus },
+              { key: 'advanced-search', label: 'Smart Search', icon: Target },
               { key: 'companies', label: 'Companies', icon: Settings },
             ].map(({ key, label, icon: Icon }) => (
               <button
@@ -325,6 +327,19 @@ export default function Home() {
             loading={loading} 
             apiKey={apiKey}
             jobCriteria={jobCriteria}
+          />
+        )}
+        {currentView === 'advanced-search' && (
+          <JobSearchEngine 
+            apiKey={apiKey}
+            onJobsFound={(foundJobs) => {
+              setJobs(foundJobs)
+              setStatistics(prev => prev ? {
+                ...prev,
+                total_jobs: foundJobs.length,
+                new_jobs_today: foundJobs.length
+              } : null)
+            }}
           />
         )}
         {currentView === 'companies' && (
