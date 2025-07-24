@@ -29,6 +29,7 @@ import openai
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from config.config import FILTERING_CRITERIA, FILES, OPENAI_SETTINGS, OUTPUT_SETTINGS
+from .advanced_job_agent import OpenAIJobSearchAgent, search_jobs_with_openai_agent
 
 
 class JobSearchEngine:
@@ -298,6 +299,76 @@ class JobSearchEngine:
         field_text = re.sub(r'^\s*\d+\.\s*', '', field_text)
         
         return field_text.strip()
+
+    def search_company_jobs_with_agent(self, company_name: str, career_page_url: str) -> List[Dict]:
+        """
+        Search for jobs using the advanced agent-based approach with web browsing.
+        
+        This method uses the AdvancedJobSearchAgent which can:
+        - Actually browse company career websites
+        - Click on individual job postings
+        - Read full job descriptions
+        - Make intelligent relevance decisions
+        
+        Args:
+            company_name: Name of the company
+            career_page_url: Career page URL
+            
+        Returns:
+            List of relevant job dictionaries
+        """
+        try:
+            self.logger.info(f"Starting agent-based search for {company_name}")
+            
+            # Initialize the OpenAI agent
+            agent = OpenAIJobSearchAgent(self.api_key)
+            
+            # Use agent to search for jobs
+            jobs = agent.search_company_jobs(company_name, career_page_url)
+            
+            self.logger.info(f"Agent found {len(jobs)} relevant jobs for {company_name}")
+            
+            # Add to search results for tracking
+            self.search_results.extend(jobs)
+            
+            return jobs
+            
+        except Exception as e:
+            self.logger.error(f"Error in agent-based search for {company_name}: {e}")
+            return []
+    
+    def search_all_companies_with_agent(self) -> List[Dict]:
+        """
+        Search all companies using the advanced agent approach.
+        
+        Returns:
+            List of all relevant jobs found across all companies
+        """
+        all_jobs = []
+        
+        for i, company in enumerate(self.companies, 1):
+            company_name = company.get('company_name', '')
+            career_url = company.get('career_page_url', '')
+            
+            if not company_name:
+                self.logger.warning(f"Skipping company {i}: Missing company name")
+                continue
+                
+            self.logger.info(f"Processing company {i}/{len(self.companies)}: {company_name}")
+            print(f"\n🔍 Searching {company_name} ({i}/{len(self.companies)})...")
+            
+            jobs = self.search_company_jobs_with_agent(company_name, career_url)
+            all_jobs.extend(jobs)
+            
+            if jobs:
+                print(f"   ✅ Found {len(jobs)} relevant jobs")
+            else:
+                print(f"   ❌ No relevant jobs found")
+        
+        self.logger.info(f"Agent-based search completed. Found {len(all_jobs)} total relevant jobs.")
+        print(f"\n🎯 Total relevant jobs found: {len(all_jobs)}")
+        
+        return all_jobs
     
     def meets_filtering_criteria(self, job: Dict) -> bool:
         """

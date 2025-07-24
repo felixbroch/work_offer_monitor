@@ -49,6 +49,47 @@ def run_single_search():
     engine.run()
 
 
+def run_agent_based_search():
+    """Run a job search using the advanced agent with web browsing."""
+    print("🤖 Starting advanced agent-based job search...")
+    print("This method actually browses company websites and analyzes job postings!")
+    
+    api_key = OPENAI_SETTINGS["api_key"]
+    engine = JobSearchEngine(api_key)
+    
+    try:
+        # Use the new agent-based search
+        jobs = engine.search_all_companies_with_agent()
+        
+        if jobs:
+            print(f"\n✅ Agent found {len(jobs)} relevant jobs!")
+            
+            # Save to database
+            db = JobDatabase()
+            for job in jobs:
+                db.add_job(job)
+            
+            print(f"💾 Saved {len(jobs)} jobs to database")
+            
+            # Show summary
+            print("\n📋 Job Summary:")
+            for job in jobs[:5]:  # Show first 5
+                print(f"  • {job.get('title', 'Unknown')} at {job.get('company_name', 'Unknown')}")
+                print(f"    Location: {job.get('location', 'Unknown')}")
+                print(f"    Relevance: {job.get('relevance_score', 0)}%")
+                print()
+            
+            if len(jobs) > 5:
+                print(f"  ... and {len(jobs) - 5} more jobs")
+        else:
+            print("❌ No relevant jobs found")
+            
+    except Exception as e:
+        print(f"❌ Error during agent search: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def run_scheduler():
     """Run the job scheduler."""
     print("📅 Starting job scheduler...")
@@ -117,7 +158,7 @@ def main():
     )
     parser.add_argument(
         "command",
-        choices=["search", "schedule", "run-once", "stats", "dashboard"],
+        choices=["search", "agent-search", "schedule", "run-once", "stats", "dashboard"],
         help="Command to run"
     )
     
@@ -129,28 +170,31 @@ def main():
             sys.exit(1)
         
         print("Choose an option:")
-        print("1. Run single job search")
-        print("2. Start scheduler (daily monitoring)")
-        print("3. Run monitoring once")
-        print("4. Show statistics")
-        print("5. Launch dashboard")
-        print("6. Exit")
+        print("1. Run single job search (legacy)")
+        print("2. Run advanced agent-based search 🤖")
+        print("3. Start scheduler (daily monitoring)")
+        print("4. Run monitoring once")
+        print("5. Show statistics")
+        print("6. Launch dashboard")
+        print("7. Exit")
         print()
         
         try:
-            choice = input("Enter your choice (1-6): ").strip()
+            choice = input("Enter your choice (1-7): ").strip()
             
             if choice == "1":
                 run_single_search()
             elif choice == "2":
-                run_scheduler()
+                run_agent_based_search()
             elif choice == "3":
-                run_once()
+                run_scheduler()
             elif choice == "4":
-                show_statistics()
+                run_once()
             elif choice == "5":
-                launch_dashboard()
+                show_statistics()
             elif choice == "6":
+                launch_dashboard()
+            elif choice == "7":
                 print("👋 Goodbye!")
                 sys.exit(0)
             else:
@@ -171,6 +215,8 @@ def main():
         
         if args.command == "search":
             run_single_search()
+        elif args.command == "agent-search":
+            run_agent_based_search()
         elif args.command == "schedule":
             run_scheduler()
         elif args.command == "run-once":
