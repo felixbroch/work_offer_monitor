@@ -129,3 +129,6 @@ notifications_log.csv
 
 # Personal API keys and sensitive data
 config_local.py
+
+# Unused scraper modules
+src/scrapers/
