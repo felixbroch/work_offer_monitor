@@ -67,7 +67,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Real job search failed:', error)
     return NextResponse.json(
-      { success: false, error: 'Real job search failed', details: error.message },
+      { 
+        success: false, 
+        error: 'Real job search failed', 
+        details: error instanceof Error ? error.message : 'Unknown error occurred'
+      },
       { status: 500 }
     )
   }
