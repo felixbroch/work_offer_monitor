@@ -13,7 +13,7 @@ const nextConfig = {
         },
       ]
     }
-    // In production (Vercel), no rewrites needed - requests go directly to serverless functions
+    // In production (Vercel), no rewrites needed
     return []
   },
 }
