@@ -32,11 +32,11 @@
     "openai": "^4.20.1"
   },
   "devDependencies": {
-    "eslint": "^9.0.0",
+    "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0"
   },
   "engines": {
-    "node": "18.x",
+    "node": "22.x",
     "npm": ">=8.0.0"
   }
 }
