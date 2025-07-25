@@ -114,7 +114,7 @@ Return the jobs in this exact JSON format:
           const jobData = JSON.parse(responseText)
           if (jobData.jobs && Array.isArray(jobData.jobs)) {
             // Add unique IDs and ensure data consistency
-            const processedJobs = jobData.jobs.map((job, index) => ({
+            const processedJobs = jobData.jobs.map((job: any, index: number) => ({
               job_id: `${company.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${index}`,
               job_title: job.job_title || 'Position Available',
               company_name: company,
@@ -193,18 +193,18 @@ Return the jobs in this exact JSON format:
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [JOB-SEARCH-API] Fatal error:', error)
     
     // Return error response with fallback data
     return NextResponse.json({
       success: false,
       error: 'Job search failed',
-      details: error.message,
+      details: error?.message || 'Unknown error occurred',
       jobs: [], // Empty jobs array
       debug_info: {
-        error_type: error.name,
-        error_message: error.message,
+        error_type: error?.name || 'UnknownError',
+        error_message: error?.message || 'No error message available',
         timestamp: new Date().toISOString()
       }
     }, { status: 500 })

@@ -51,8 +51,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: false,
       openai_connected: false,
-      error: error.message || 'Unknown error',
-      error_type: error.name || 'Error',
+      error: error?.message || 'Unknown error occurred',
+      error_type: error?.name || 'UnknownError',
       test_timestamp: new Date().toISOString()
     }, { status: 500 })
   }

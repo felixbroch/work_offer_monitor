@@ -89,7 +89,7 @@ export default function OpenAITestPage() {
             <input
               type="password"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={(e: any) => setApiKey(e.target.value)}
               placeholder="sk-..."
               className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
