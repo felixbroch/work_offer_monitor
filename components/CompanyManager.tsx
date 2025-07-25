@@ -26,11 +26,38 @@ export default function CompanyManager() {
       if (!response.ok) throw new Error('Failed to load companies')
       const data = await response.json()
       
-      // Convert company names to company objects
-      const companyObjects = data.companies.map((name: string) => ({
-        company_name: name,
-        career_page_url: ''
-      }))
+      // Ensure data.companies is an array and handle different formats
+      let companiesData = []
+      if (Array.isArray(data.companies)) {
+        companiesData = data.companies
+      } else if (Array.isArray(data)) {
+        companiesData = data
+      } else {
+        throw new Error('Invalid companies data format')
+      }
+      
+      // Convert API company objects to frontend format
+      const companyObjects = companiesData.map((company: any) => {
+        // Handle both string and object formats
+        if (typeof company === 'string') {
+          return {
+            company_name: company,
+            career_page_url: ''
+          }
+        } else if (company && typeof company === 'object') {
+          return {
+            company_name: company.name || company.company_name || 'Unknown Company',
+            career_page_url: company.career_page_url || (company.domain ? `https://${company.domain}` : '')
+          }
+        } else {
+          console.warn('Invalid company data:', company)
+          return {
+            company_name: 'Unknown Company',
+            career_page_url: ''
+          }
+        }
+      }).filter(company => company.company_name !== 'Unknown Company') // Filter out invalid entries
+      
       setCompanies(companyObjects)
     } catch (err) {
       console.error('Failed to load companies:', err)
@@ -189,18 +216,20 @@ export default function CompanyManager() {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {companies.map((company, index) => (
-              <CompanyItem
-                key={index}
-                company={company}
-                index={index}
-                isEditing={editingIndex === index}
-                onEdit={() => setEditingIndex(index)}
-                onSave={(updatedCompany) => handleEditCompany(index, updatedCompany)}
-                onCancel={() => setEditingIndex(null)}
-                onDelete={() => handleDeleteCompany(index)}
-              />
-            ))}
+            {companies
+              .filter(company => company && company.company_name) // Safety filter
+              .map((company, index) => (
+                <CompanyItem
+                  key={`${company.company_name}-${index}`}
+                  company={company}
+                  index={index}
+                  isEditing={editingIndex === index}
+                  onEdit={() => setEditingIndex(index)}
+                  onSave={(updatedCompany) => handleEditCompany(index, updatedCompany)}
+                  onCancel={() => setEditingIndex(null)}
+                  onDelete={() => handleDeleteCompany(index)}
+                />
+              ))}
           </div>
         )}
       </div>

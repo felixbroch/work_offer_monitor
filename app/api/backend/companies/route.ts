@@ -42,26 +42,30 @@ export function GET() {
 
 export function POST(request: Request) {
   return request.json().then(body => {
-    const { name, domain, industry, size } = body
+    const { company_name, career_page_url, name, domain, industry, size } = body
 
-    // Validate required fields
-    if (!name || !domain) {
+    // Validate required fields (accept either company_name or name)
+    const companyName = company_name || name
+    if (!companyName) {
       return Response.json(
-        { error: 'Name and domain are required' },
+        { error: 'Company name is required' },
         { status: 400 }
       )
     }
 
-    // Mock creating a new company
+    // Mock creating a new company - return in the frontend format
     const newCompany = {
       id: Date.now(),
-      name,
-      domain,
+      name: companyName,
+      domain: domain || (career_page_url ? new URL(career_page_url).hostname : ''),
       industry: industry || 'Unknown',
       size: size || 'Unknown',
       jobs_posted: 0,
       last_activity: new Date().toISOString().split('T')[0],
-      status: 'active'
+      status: 'active',
+      // Also include frontend format
+      company_name: companyName,
+      career_page_url: career_page_url || ''
     }
 
     return Response.json(newCompany, { status: 201 })
