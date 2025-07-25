@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Python Backend API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .result { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .endpoint-group { margin: 20px 0; }
+        .endpoint-group h3 { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Python Backend API Test</h1>
+        <p>This page tests the Python Flask backend API endpoints.</p>
+        
+        <div class="endpoint-group">
+            <h3>Health & Basic Tests</h3>
+            <button onclick="testEndpoint('/api/health', 'GET')">Test Health</button>
+            <button onclick="testEndpoint('/api/backend/jobs', 'GET')">Test Jobs</button>
+            <button onclick="testEndpoint('/api/backend/jobs/statistics', 'GET')">Test Statistics</button>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Company Management</h3>
+            <button onclick="testEndpoint('/api/backend/companies', 'GET')">Get Companies</button>
+            <button onclick="testCreateCompany()">Create Company</button>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Job Search</h3>
+            <button onclick="testApiKeyValidation()">Test API Key Validation</button>
+            <button onclick="testJobSearch()">Test Job Search</button>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Controls</h3>
+            <button onclick="clearResults()">Clear Results</button>
+            <button onclick="testAllEndpoints()">Test All Endpoints</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function testEndpoint(url, method = 'GET', body = null) {
+            const results = document.getElementById('results');
+            addResult(`Testing ${method} ${url}...`, 'info');
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: body ? { 'Content-Type': 'application/json' } : {}
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ SUCCESS (${response.status}): ${method} ${url}`, 'success');
+                    addResult(JSON.stringify(data, null, 2), 'success', true);
+                } else {
+                    addResult(`❌ ERROR (${response.status}): ${method} ${url}`, 'error');
+                    addResult(JSON.stringify(data, null, 2), 'error', true);
+                }
+            } catch (error) {
+                addResult(`❌ NETWORK ERROR: ${method} ${url} - ${error.message}`, 'error');
+                console.error('Test endpoint error:', error);
+            }
+        }
+        
+        async function testCreateCompany() {
+            await testEndpoint('/api/backend/companies', 'POST', {
+                name: 'Test Company',
+                domain: 'testcompany.com',
+                industry: 'Technology',
+                size: 'Medium'
+            });
+        }
+        
+        async function testApiKeyValidation() {
+            await testEndpoint('/api/backend/validate-api-key', 'POST', {
+                api_key: 'sk-test12345678901234567890'
+            });
+        }
+        
+        async function testJobSearch() {
+            await testEndpoint('/api/backend/jobs/search-with-criteria', 'POST', {
+                api_key: 'sk-test12345678901234567890',
+                criteria: {
+                    locations: ['San Francisco', 'Remote'],
+                    title_keywords: ['Software Engineer'],
+                    experience_levels: ['senior'],
+                    remote_allowed: true,
+                    company_types: ['Technology'],
+                    salary_min: '100000'
+                },
+                companies: ['Google', 'Microsoft']
+            });
+        }
+        
+        async function testAllEndpoints() {
+            clearResults();
+            addResult('🚀 Starting comprehensive API test...', 'info');
+            
+            // Test in sequence to avoid overwhelming the server
+            await testEndpoint('/api/health', 'GET');
+            await testEndpoint('/api/backend/jobs', 'GET');
+            await testEndpoint('/api/backend/jobs/statistics', 'GET');
+            await testEndpoint('/api/backend/companies', 'GET');
+            await testCreateCompany();
+            await testApiKeyValidation();
+            await testJobSearch();
+            
+            addResult('🏁 All tests completed!', 'info');
+        }
+        
+        function addResult(message, type, isCode = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            
+            if (isCode) {
+                div.innerHTML = `<pre>${message}</pre>`;
+            } else {
+                div.textContent = message;
+            }
+            
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            addResult('🔧 Python Backend API Tester Ready', 'info');
+            addResult('Click "Test All Endpoints" to run comprehensive tests', 'info');
+        });
+    </script>
+</body>
+</html>
