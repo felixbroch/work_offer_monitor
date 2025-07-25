@@ -1,6 +1,6 @@
+import { NextResponse } from 'next/server'
+
 export async function POST(request: any) {
-  const { NextResponse } = await eval('import("next/server")')
-  
   try {
     const body = await request.json()
     const { query, location, remote, experience_level } = body

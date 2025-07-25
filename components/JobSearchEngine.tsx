@@ -157,15 +157,15 @@ export default function JobSearchEngine({ apiKey, onJobsFound }: JobSearchEngine
       }
       
       console.log('📤 SENDING REQUEST TO API:', {
-        endpoint: '/api/backend/jobs/search-with-criteria',
+        endpoint: '/api/backend/jobs/search-enhanced', // Updated to use enhanced endpoint
         payload: requestPayload,
         companiesCount: companies.length,
         criteriaValid: !!searchCriteria,
         apiKeyPresent: !!apiKey
       })
 
-      // Call the API endpoint
-      const response = await fetch('/api/backend/jobs/search-with-criteria', {
+      // Call the enhanced API endpoint with better OpenAI integration
+      const response = await fetch('/api/backend/jobs/search-enhanced', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const { NextResponse } = await eval('import("next/server")')
     // Mock statistics for now - replace with real data when backend is available
     const statistics = {
       total_jobs: 0,

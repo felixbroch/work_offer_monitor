@@ -158,3 +158,34 @@ After these fixes, users should experience:
 - Fixed filter, map, and callback parameter types throughout the component
 
 **Build Status:** ✅ **TypeScript errors resolved** - Production build should now succeed.
+
+## 🚨 **CRITICAL DEPLOYMENT FIX**
+
+### Module Import Error Resolution
+**Error:** `Cannot find module '/vercel/path0/node_modules/next/server' imported from /vercel/path0/.next/server/app/api/backend/jobs/statistics/route.js`
+
+**Root Cause:** Problematic `eval('import("next/server")')` patterns causing module resolution failures in Vercel production environment.
+
+**Critical Files Fixed:**
+```typescript
+// BEFORE (causing deployment failure)
+export async function GET() {
+  const { NextResponse } = await eval('import("next/server")')
+  // ...
+}
+
+// AFTER (Vercel compatible)
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  // No dynamic imports needed - NextResponse already imported
+  // ...
+}
+```
+
+**Files Updated:**
+- ✅ `app/api/backend/jobs/statistics/route.ts` - Removed eval import
+- ✅ `app/api/backend/jobs/export/route.ts` - Fixed import pattern
+- ✅ `app/api/backend/jobs/search/route.ts` - Removed dynamic import
+
+**Deployment Status:** ✅ **Module resolution errors fixed** - Vercel deployment should now succeed.

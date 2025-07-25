@@ -42,22 +42,36 @@ export function GET() {
 
 export function POST(request: Request) {
   return request.json().then(body => {
+    console.log('[COMPANIES-API] Received POST request with body:', body)
+    
     const { company_name, career_page_url, name, domain, industry, size } = body
 
     // Validate required fields (accept either company_name or name)
     const companyName = company_name || name
     if (!companyName) {
+      console.log('[COMPANIES-API] Validation failed: Missing company name')
       return Response.json(
         { error: 'Company name is required' },
         { status: 400 }
       )
     }
 
+    // Safely extract domain from URL
+    let extractedDomain = domain
+    if (!extractedDomain && career_page_url) {
+      try {
+        extractedDomain = new URL(career_page_url).hostname
+      } catch (e) {
+        console.log('[COMPANIES-API] Invalid URL provided:', career_page_url)
+        extractedDomain = ''
+      }
+    }
+
     // Mock creating a new company - return in the frontend format
     const newCompany = {
       id: Date.now(),
       name: companyName,
-      domain: domain || (career_page_url ? new URL(career_page_url).hostname : ''),
+      domain: extractedDomain || '',
       industry: industry || 'Unknown',
       size: size || 'Unknown',
       jobs_posted: 0,
@@ -68,11 +82,12 @@ export function POST(request: Request) {
       career_page_url: career_page_url || ''
     }
 
+    console.log('[COMPANIES-API] Created company:', newCompany)
     return Response.json(newCompany, { status: 201 })
   }).catch(error => {
-    console.error('Create company error:', error)
+    console.error('[COMPANIES-API] Error processing request:', error)
     return Response.json(
-      { error: 'Failed to create company' },
+      { error: 'Failed to create company', details: error.message },
       { status: 500 }
     )
   })
