@@ -56,7 +56,7 @@ export default function CompanyManager() {
             career_page_url: ''
           }
         }
-      }).filter(company => company.company_name !== 'Unknown Company') // Filter out invalid entries
+      }).filter((company: any) => company.company_name !== 'Unknown Company') // Filter out invalid entries
       
       setCompanies(companyObjects)
     } catch (err) {
@@ -100,12 +100,12 @@ export default function CompanyManager() {
 
   const handleDeleteCompany = (index: number) => {
     if (confirm('Are you sure you want to remove this company?')) {
-      setCompanies(companies.filter((_, i) => i !== index))
+      setCompanies(companies.filter((_: any, i: number) => i !== index))
     }
   }
 
   const handleEditCompany = (index: number, updatedCompany: Company) => {
-    const updated = companies.map((company, i) => 
+    const updated = companies.map((company: any, i: number) => 
       i === index ? updatedCompany : company
     )
     setCompanies(updated)
@@ -217,8 +217,8 @@ export default function CompanyManager() {
         ) : (
           <div className="divide-y divide-gray-200">
             {companies
-              .filter(company => company && company.company_name) // Safety filter
-              .map((company, index) => (
+              .filter((company: any) => company && company.company_name) // Safety filter
+              .map((company: any, index: number) => (
                 <CompanyItem
                   key={`${company.company_name}-${index}`}
                   company={company}
