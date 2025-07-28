@@ -1,4 +1,4 @@
-# Exclude heavy backend files from Vercel deployment
+# Exclude ALL heavy backend files from Vercel deployment
 backend/
 src/
 scripts/
@@ -28,9 +28,17 @@ coverage.xml
 .pytest_cache/
 .hypothesis/
 
-# Keep only essential files for lightweight deployment
-!api/
-!config/
+# Exclude any remaining heavy files
+*.db
+*.sqlite
+*.sqlite3
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Only include essential files for Vercel
+!api/index.py
 !requirements.txt
 !vercel.json
-!README.md
