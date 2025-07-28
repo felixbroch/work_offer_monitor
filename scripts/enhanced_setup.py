@@ -115,8 +115,9 @@ PORT=5000
         
         # Bing Search API (Optional)
         print("\n🔸 Bing Search API (Optional - alternative to Google)")
-        print("This provides an alternative web search option.")
+        print("This provides an alternative web search option using Microsoft's Bing API.")
         print("Setup guide: https://docs.microsoft.com/en-us/bing/search-apis/")
+        print("Note: Uses direct REST API calls, no additional packages needed.")
         
         if input("Configure Bing Search API? (y/n): ").lower() == 'y':
             env_vars['BING_API_KEY'] = input("Enter Bing API key: ").strip()

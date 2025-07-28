@@ -5,7 +5,7 @@ requests>=2.28.0
 
 # Web Search APIs
 google-api-python-client>=2.100.0
-bing-search-api>=0.1.0
+# Note: Bing Search uses direct REST API calls, no additional package needed
 
 # Scheduling
 APScheduler>=3.10.0

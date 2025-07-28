@@ -233,6 +233,7 @@ Test search engine with a sample company.
 - **Setup:** [Microsoft Cognitive Services](https://azure.microsoft.com/en-us/services/cognitive-services/bing-web-search-api/)
 - **Cost:** 1000 free searches/month, then pricing tiers
 - **Advantages:** Good fallback option, different result perspective
+- **Note:** Uses direct REST API calls, no additional Python package required
 
 #### 3. DuckDuckGo (Free Fallback)
 - **Best for:** Basic search when no paid APIs available

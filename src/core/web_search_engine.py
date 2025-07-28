@@ -190,11 +190,15 @@ class WebSearchEngine:
         """Search using Bing Search API."""
         try:
             url = "https://api.bing.microsoft.com/v7.0/search"
-            headers = {'Ocp-Apim-Subscription-Key': self.bing_api_key}
+            headers = {
+                'Ocp-Apim-Subscription-Key': self.bing_api_key,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
             params = {
                 'q': query,
                 'count': min(max_results, 50),
-                'mkt': 'en-US'
+                'mkt': 'en-US',
+                'responseFilter': 'webpages'
             }
             
             response = self.session.get(url, headers=headers, params=params, timeout=10)

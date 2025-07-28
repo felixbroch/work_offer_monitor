@@ -6,39 +6,49 @@ from flask import Flask, jsonify, request
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# Create Flask app
-app = Flask(__name__)
+# Import the enhanced backend server
+try:
+    from backend.api.server import app as backend_app
+    # Use the enhanced backend app
+    app = backend_app
+    print("✅ Enhanced backend server imported successfully")
+except ImportError as e:
+    print(f"⚠️ Could not import enhanced backend: {e}")
+    print("📄 Using fallback API endpoints")
+    
+    # Create Flask app as fallback
+    app = Flask(__name__)
 
-# Add CORS
-@app.after_request  
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+    # Add CORS
+    @app.after_request  
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
 
-# Simple health check
-@app.route('/api/health')
-def health():
-    return jsonify({'status': 'ok', 'message': 'API is running'})
+    # Simple health check
+    @app.route('/api/health')
+    def health():
+        return jsonify({'status': 'ok', 'message': 'Fallback API is running'})
 
-# Mock endpoints for testing - replace with real implementation once working
-@app.route('/api/backend/jobs')
-def get_jobs():
-    return jsonify({
-        'jobs': [],
-        'message': 'Jobs endpoint working'
-    })
+    # Mock endpoints for testing - replace with real implementation once working
+    @app.route('/api/backend/jobs')
+    def get_jobs():
+        return jsonify({
+            'jobs': [],
+            'message': 'Jobs endpoint working (fallback mode)'
+        })
 
-@app.route('/api/backend/jobs/statistics')
-def get_statistics():
-    return jsonify({
-        'total_jobs': 0,
-        'recent_activity': 0,
-        'status_counts': {},
-        'company_counts': {},
-        'message': 'Statistics endpoint working'
-    })
+    @app.route('/api/backend/jobs/statistics')
+    def get_statistics():
+        return jsonify({
+            'total_jobs': 0,
+            'recent_activity': 0,
+            'status_counts': {},
+            'company_counts': {},
+            'message': 'Statistics endpoint working (fallback mode)'
+        })
 
 @app.route('/api/backend/jobs/search', methods=['POST'])
 def search_jobs():
