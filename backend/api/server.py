@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Flask API Server for Job Search Assistant
+Enhanced Flask API Server for Job Search Assistant
 
 This module provides REST API endpoints for the Next.js frontend,
-enabling web-based interaction with the job monitoring system.
+enabling web-based interaction with the enhanced job monitoring system
+with real web search capabilities.
 """
 
 import os
@@ -20,9 +21,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from src.core.database import JobDatabase, JobRecord
 from src.core.history_tracker import JobHistoryTracker
-from src.core.job_search_engine import JobSearchEngine
+from src.core.enhanced_job_search_engine import EnhancedJobSearchEngine
 from src.core.scheduler import JobSearchScheduler
-from config.config import FILES, OPENAI_SETTINGS
+from config.config import FILES, OPENAI_SETTINGS, FILTERING_CRITERIA
 
 # Configure logging
 logging.basicConfig(
@@ -99,7 +100,7 @@ def validate_api_key_endpoint():
         
         # Test the API key with a simple call
         try:
-            engine = JobSearchEngine(api_key)
+            engine = EnhancedJobSearchEngine(api_key)
             # You could add a simple test call here if needed
             return jsonify({
                 'valid': True,
@@ -216,7 +217,12 @@ def search_jobs():
             }), 400
         
         # Initialize search engine with provided API key
-        engine = JobSearchEngine(api_key)
+        engine = EnhancedJobSearchEngine(
+            openai_api_key=api_key,
+            google_api_key=data.get('google_api_key'),
+            bing_api_key=data.get('bing_api_key'),
+            custom_search_engine_id=data.get('custom_search_engine_id')
+        )
         
         # Search for jobs
         all_jobs = []
@@ -264,6 +270,182 @@ def search_jobs():
         
     except Exception as e:
         logger.error(f"Error in job search: {e}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/jobs/search-enhanced', methods=['POST'])
+def enhanced_search_jobs():
+    """Enhanced job search with real web search capabilities."""
+    try:
+        data = request.get_json()
+        openai_api_key = data.get('openai_api_key')
+        google_api_key = data.get('google_api_key')
+        bing_api_key = data.get('bing_api_key')
+        custom_search_engine_id = data.get('custom_search_engine_id')
+        companies = data.get('companies', [])
+        location = data.get('location', '')
+        
+        if not validate_api_key(openai_api_key):
+            return jsonify({
+                'error': 'Invalid OpenAI API key',
+                'message': 'Please provide a valid OpenAI API key'
+            }), 400
+        
+        if not companies:
+            return jsonify({
+                'error': 'No companies specified',
+                'message': 'Please provide at least one company to search'
+            }), 400
+        
+        # Initialize enhanced search engine
+        engine = EnhancedJobSearchEngine(
+            openai_api_key=openai_api_key,
+            google_api_key=google_api_key,
+            bing_api_key=bing_api_key,
+            custom_search_engine_id=custom_search_engine_id
+        )
+        
+        # Get search capabilities
+        capabilities = engine.get_search_capabilities()
+        
+        # Run enhanced batch search
+        search_results = engine.run_batch_search(companies)
+        
+        # Process results for database storage
+        total_new_jobs = 0
+        for company_result in search_results.get('company_results', []):
+            company_name = company_result.get('company_name', '')
+            if company_result.get('status') == 'success':
+                # Here you could process jobs through history tracker
+                # For now, just count them
+                total_new_jobs += company_result.get('jobs_found', 0)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Enhanced search completed for {len(companies)} companies',
+            'results': search_results,
+            'capabilities': capabilities,
+            'total_new_jobs': total_new_jobs,
+            'search_mode': 'enhanced_web_search'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced job search: {e}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/search/capabilities', methods=['GET'])
+def get_search_capabilities():
+    """Get information about available search capabilities."""
+    try:
+        # Check if API keys are provided in query params for testing
+        openai_key = request.args.get('openai_key', '')
+        google_key = request.args.get('google_key', '')
+        bing_key = request.args.get('bing_key', '')
+        cse_id = request.args.get('cse_id', '')
+        
+        if openai_key:
+            engine = EnhancedJobSearchEngine(
+                openai_api_key=openai_key,
+                google_api_key=google_key if google_key else None,
+                bing_api_key=bing_key if bing_key else None,
+                custom_search_engine_id=cse_id if cse_id else None
+            )
+            capabilities = engine.get_search_capabilities()
+        else:
+            # Return generic capabilities without API keys
+            capabilities = {
+                'enhanced_search': True,
+                'web_search_engine': {
+                    'providers_available': {
+                        'google': False,
+                        'bing': False,
+                        'duckduckgo': True
+                    },
+                    'job_sites_monitored': 9,
+                    'openai_enabled': False
+                },
+                'backup_agent_available': False,
+                'filtering_criteria': FILTERING_CRITERIA
+            }
+        
+        return jsonify({
+            'success': True,
+            'capabilities': capabilities,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting search capabilities: {e}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500
+
+
+@app.route('/api/search/test', methods=['POST'])
+def test_search_engine():
+    """Test the search engine with a sample company."""
+    try:
+        data = request.get_json()
+        openai_api_key = data.get('openai_api_key')
+        google_api_key = data.get('google_api_key')
+        bing_api_key = data.get('bing_api_key')
+        custom_search_engine_id = data.get('custom_search_engine_id')
+        test_company = data.get('test_company', 'Microsoft')
+        
+        if not validate_api_key(openai_api_key):
+            return jsonify({
+                'error': 'Invalid OpenAI API key',
+                'message': 'Please provide a valid OpenAI API key'
+            }), 400
+        
+        # Initialize enhanced search engine
+        engine = EnhancedJobSearchEngine(
+            openai_api_key=openai_api_key,
+            google_api_key=google_api_key,
+            bing_api_key=bing_api_key,
+            custom_search_engine_id=custom_search_engine_id
+        )
+        
+        start_time = datetime.now()
+        
+        # Test search
+        search_results = engine.search_company_jobs(test_company)
+        job_listings = engine.extract_structured_jobs(search_results, test_company)
+        
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+        
+        test_results = {
+            'test_company': test_company,
+            'search_successful': len(search_results) > 50,
+            'extraction_successful': len(job_listings) > 0,
+            'jobs_found': len(job_listings),
+            'search_duration_seconds': duration,
+            'raw_results_length': len(search_results),
+            'sample_jobs': job_listings[:3] if job_listings else [],  # First 3 jobs as sample
+            'capabilities': engine.get_search_capabilities(),
+            'timestamp': start_time.isoformat(),
+            'success': len(job_listings) > 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'test_results': test_results,
+            'message': f'Test completed: {"Success" if test_results["success"] else "Failed"}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error testing search engine: {e}")
         return jsonify({
             'error': 'Internal server error',
             'message': str(e),
@@ -424,6 +606,24 @@ def backend_get_job_statistics():
 def backend_trigger_job_search():
     """Trigger job search endpoint for /api/backend path."""
     return search_jobs()
+
+
+@app.route('/api/backend/jobs/search-enhanced', methods=['POST'])
+def backend_enhanced_search_jobs():
+    """Enhanced job search endpoint for /api/backend path."""
+    return enhanced_search_jobs()
+
+
+@app.route('/api/backend/search/capabilities', methods=['GET'])
+def backend_search_capabilities():
+    """Search capabilities endpoint for /api/backend path."""
+    return get_search_capabilities()
+
+
+@app.route('/api/backend/search/test', methods=['POST'])
+def backend_test_search():
+    """Test search endpoint for /api/backend path."""
+    return test_search_engine()
 
 
 @app.route('/api/backend/jobs/export', methods=['GET'])
